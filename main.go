@@ -3,22 +3,32 @@ package main
 import (
 	"log"
 	"strconv"
-
+	"os"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/joho/godotenv"
 )
 
 type User struct {
 	gorm.Model
 	FirstName        string
 	LastName         string
-	TelegramId       string
+	TelegramID       string
 	TelegramUsername string
+}
+func init(){
+	if err := godotenv.Load(); err != nil {
+        log.Print("No .env file found")
+	}
 }
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("1136948955:AAHvWUvfLqjdHf128j7aFPC2VYl4EzOFhJM")
+	TelegramToken, exist := os.LookupEnv("TELEGRAM_BOT_TOKEN")
+	if(!exist){
+		log.Fatal("couldnt find any bot token")
+	}
+	bot, err := tgbotapi.NewBotAPI(TelegramToken)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -46,7 +56,7 @@ func main() {
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		db.Create(&User{FirstName: update.Message.From.FirstName, LastName: update.Message.From.LastName,
-			TelegramId: strconv.Itoa(update.Message.From.ID), TelegramUsername: update.Message.From.UserName})
+			TelegramID: strconv.Itoa(update.Message.From.ID), TelegramUsername: update.Message.From.UserName})
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 		msg.ReplyToMessageID = update.Message.MessageID
 
